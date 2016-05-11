@@ -1,0 +1,302 @@
+&amba {
+
+    axi_i2s_adi_0: axi_i2s_adi@43c20000 {
+        compatible = "adi,axi-i2s-1.00.a";
+        reg = <0x43c20000 0x10000>;
+        dmas = <&dmac_s 0 &dmac_s 1>;
+        dma-names = "tx", "rx";
+        clocks = <&clkc 15>, <&audio_clock>, <&audio_clock>;
+        clock-names = "axi", "ref", "i2s";
+    };
+    
+    audio_clock: audio_clock {
+        compatible = "fixed-clock";
+        #clock-cells = <0>;
+        clock-frequency = <12288000>;
+    };
+    
+    glassense_aux_sound {
+        compatible = "iit,glassense"; 
+        cpu-dai = <&axi_i2s_adi_0>;
+    };
+
+    fir_top_0: fir_top@43c00000 {
+		compatible = "iit,glbform-1.0";
+		interrupt-parent = <&intc>;
+		interrupts = <0 29 4>, <0 4>;
+		reg = <0x43c00000 0x10000>;
+		xlnx,burstlen = <0x2>;
+		xlnx,nummics = <0x4>;
+        //   the following are related to miscellaneous
+		iit_enable = <0x43c10000>;
+		iit_ordnum = <0x0>;
+	};
+    
+    miscellaneus_0: miscellaneus@43c10000 {
+		compatible = "iit.it,miscellaneus-1.1";
+		reg = <0x43c10000 0x10000>;
+	};
+
+    axi_iic_eeprom: i2c@41600000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "xlnx,xps-iic-2.00.a";
+		interrupt-parent = <&intc>;
+		interrupts = <0 32 4>;
+		reg = <0x41600000 0x10000>;
+        eeprom: eeprom@50 {
+	        compatible = "atmel,24c64";
+	        reg = <0x50>;
+	        pagesize = <64>;
+        };  
+	};
+
+	axi_iic_ampli: i2c@41620000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "xlnx,xps-iic-2.00.a";
+		interrupt-parent = <&intc>;
+		interrupts = <0 35 4>;
+		reg = <0x41620000 0x10000>;
+        ssm2518: ssm2518@34 {
+            compatible = "adi,ssm2518";
+            reg = <0x34>;
+           /* 
+            * nSD Active Low shutdown
+            * 54+54 means GPIO54,  
+            */
+            gpios = <&gpio0 108 0>;
+        };
+	};
+    ampli_sound {
+        compatible = "digilent,ssm2518-sound";
+        audio-codec = <&ssm2518>;
+        cpu-dai = <&axi_i2s_adi_0>;
+    };
+/*
+    axi_iic_temp: i2c@41610000 {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        compatible = "xlnx,xps-iic-2.00.a";
+        interrupt-parent = <&intc>;
+        interrupts = <0 34 4>;
+        reg = <0x41610000 0x10000>;
+    };
+*/
+    axi_uart_BT: serial@42c00000 {
+        clock-names = "ref_clk";
+        clocks = <&clkc 0>;
+        compatible = "xlnx,xps-uartlite-1.00.a";
+        current-speed = <115200>;
+        device_type = "serial";
+        interrupt-parent = <&intc>;
+        interrupts = <0 36 1>;
+        port-number = <2>;
+        reg = <0x42c00000 0x10000>;
+        xlnx,baudrate = <0x2580>;
+        xlnx,data-bits = <0x8>;
+        xlnx,odd-parity = <0x0>;
+        xlnx,s-axi-aclk-freq-hz-d = "100.0";
+        xlnx,use-parity = <0x0>;
+    };
+
+   vbat: fixed-regulator {
+       compatible = "regulator-fixed";
+       regulator-name = "dummy-vbat-supply";
+       regulator-boot-on;
+       regulator-always-on;
+   };
+
+   axi_iic_hapt: i2c@41630000 {
+       #address-cells = <1>;
+       #size-cells = <0>;
+       compatible = "xlnx,xps-iic-2.00.a";
+       interrupt-parent = <&intc>;
+       interrupts = <0 52 4>;
+       reg = <0x41630000 0x10000>;
+
+       mux@70 {
+           compatible = "nxp,pca9548";
+           reg = <0x70>;
+           #address-cells = <1>;
+           #size-cells = <0>;
+           reset = <&gpio0 105 0>;
+
+           i2c@0 {
+               #address-cells = <1>;
+               #size-cells = <0>;
+               reg = <0>;
+
+               haptic0: haptics@5a {
+                   compatible = "ti,drv2605";
+                   reg = <0x5a>;
+                   vbat-supply = <&vbat>;
+                   // enable-gpio = <&gpio0 103 0>; alway enabled
+                   mode = <0x00>;
+                   library-sel = <0x06>;
+                   vib-rated-mv = <3200>;
+                   vib-overdriver-mv = <5000>;
+               };
+           };
+           i2c@1 {
+               #address-cells = <1>;
+               #size-cells = <0>;
+               reg = <1>;
+
+               haptic1: haptics@5a {
+                   compatible = "ti,drv2605";
+                   reg = <0x5a>;
+                   vbat-supply = <&vbat>;
+                   // enable-gpio = <&gpio0 103 0>; alway enabled
+                   mode = <0x00>;
+                   library-sel = <0x06>;
+                   vib-rated-mv = <3200>;
+                   vib-overdriver-mv = <5000>;
+               };
+           };
+           i2c@2 {
+               #address-cells = <1>;
+               #size-cells = <0>;
+               reg = <2>;
+
+               haptic2: haptics@5a {
+                   compatible = "ti,drv2605";
+                   reg = <0x5a>;
+                   vbat-supply = <&vbat>;
+                   // enable-gpio = <&gpio0 103 0>; alway enabled
+                   mode = <0x00>;
+                   library-sel = <0x06>;
+                   vib-rated-mv = <3200>;
+                   vib-overdriver-mv = <5000>;
+               };
+           };
+           i2c@3 {
+               #address-cells = <1>;
+               #size-cells = <0>;
+               reg = <3>;
+
+               haptic3: haptics@5a {
+                   compatible = "ti,drv2605";
+                   reg = <0x5a>;
+                   vbat-supply = <&vbat>;
+                   // enable-gpio = <&gpio0 103 0>; alway enabled
+                   mode = <0x00>;
+                   library-sel = <0x06>;
+                   vib-rated-mv = <3200>;
+                   vib-overdriver-mv = <5000>;
+               };
+           };
+           i2c@4 {
+               #address-cells = <1>;
+               #size-cells = <0>;
+               reg = <4>;
+
+               haptic4: haptics@5a {
+                   compatible = "ti,drv2605";
+                   reg = <0x5a>;
+                   vbat-supply = <&vbat>;
+                   // enable-gpio = <&gpio0 104 0>; alway enabled
+                   mode = <0x00>;
+                   library-sel = <0x06>;
+                   vib-rated-mv = <3200>;
+                   vib-overdriver-mv = <5000>;
+               };
+           };
+           i2c@5 {
+               #address-cells = <1>;
+               #size-cells = <0>;
+               reg = <5>;
+
+               haptic5: haptics@5a {
+                   compatible = "ti,drv2605";
+                   reg = <0x5a>;
+                   vbat-supply = <&vbat>;
+                   // enable-gpio = <&gpio0 104 0>; alway enabled
+                   mode = <0x00>;
+                   library-sel = <0x06>;
+                   vib-rated-mv = <3200>;
+                   vib-overdriver-mv = <5000>;
+               };
+           };
+           i2c@6 {
+               #address-cells = <1>;
+               #size-cells = <0>;
+               reg = <6>;
+
+               haptic6: haptics@5a {
+                   compatible = "ti,drv2605";
+                   reg = <0x5a>;
+                   vbat-supply = <&vbat>;
+                   // enable-gpio = <&gpio0 104 0>; alway enabled
+                   mode = <0x00>;
+                   library-sel = <0x06>;
+                   vib-rated-mv = <3200>;
+                   vib-overdriver-mv = <5000>;
+               };
+           };
+           i2c@7 {
+               #address-cells = <1>;
+               #size-cells = <0>;
+               reg = <7>;
+
+               haptic7: haptics@5a {
+                   compatible = "ti,drv2605";
+                   reg = <0x5a>;
+                   vbat-supply = <&vbat>;
+                   // enable-gpio = <&gpio0 104 0>; alway enabled
+                   mode = <0x00>;
+                   library-sel = <0x06>;
+                   vib-rated-mv = <3200>;
+                   vib-overdriver-mv = <5000>;
+               };
+           };
+       };
+
+   };
+
+    gcpr_0: gcpr@43c30000 {
+        compatible = "iit,gcpr-2.1";
+        interrupt-parent = <&intc>;
+        interrupts = <0 53 4>;
+        reg = <0x43c30000 0x10000>;
+        xlnx,dbg = <0x0>;
+        xlnx,num-regs = <0x2>;
+        xlnx,permission-regs = <0x2>;
+    };
+
+    gpio-leds {
+        compatible = "gpio-leds";
+
+
+// MIO0 in Glassense is the BT Power ON
+//
+//       usr_led1 {
+//           label = "usr_led1";
+//           //  MIO0 
+//           gpios = <&gpio0 0 1>;
+//           default-state = "off";
+//           linux,default-trigger = "none";
+//       };
+//
+
+        led_pwr {
+                label = "led_pwr";
+                gpios = <&gpio0 98 0x1>;
+                default-state = "off";
+                linux,default-trigger = "none";
+        };
+
+        led_hb {
+                label = "led_hb";
+                gpios = <&gpio0 99 0x1>;
+                default-state = "off";
+                linux,default-trigger = "none";
+        };
+        
+    }; 
+
+};
+
+    &can1 {
+	    status = "okay";
+    };
