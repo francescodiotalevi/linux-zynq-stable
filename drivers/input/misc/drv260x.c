@@ -92,6 +92,7 @@
 #define DRV260X_RT_PLAYBACK			0x05
 #define DRV260X_DIAGNOSTICS			0x06
 #define DRV260X_AUTO_CAL			0x07
+#define DRV260X_DEV_RESET			0x80
 
 /* Audio to Haptics Control */
 #define DRV260X_AUDIO_HAPTICS_PEAK_10MS		(0 << 2)
@@ -242,8 +243,8 @@ static const struct reg_default drv260x_reg_defs[] = {
 	{ DRV260X_LRA_RES_PERIOD, 0x00 },
 };
 
-#define DRV260X_DEF_RATED_VOLT		0x90
-#define DRV260X_DEF_OD_CLAMP_VOLT	0x90
+#define DRV260X_DEF_RATED_VOLT		0x3F
+#define DRV260X_DEF_OD_CLAMP_VOLT	0x89
 
 /**
  * Rated and Overdriver Voltages:
@@ -521,7 +522,7 @@ static int drv260x_probe(struct i2c_client *client,
 	if (!haptics)
 		return -ENOMEM;
 
-	haptics->rated_voltage = DRV260X_DEF_OD_CLAMP_VOLT;
+	haptics->overdrive_voltage = DRV260X_DEF_OD_CLAMP_VOLT;
 	haptics->rated_voltage = DRV260X_DEF_RATED_VOLT;
 
 	if (pdata) {
